@@ -64,15 +64,15 @@ class SimulatorApp:
     def _handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self._export_and_analyze(quit_after=True)
+                self.running = False
             elif event.type == pygame.KEYDOWN:
                 self._on_key(event.key)
 
     def _on_key(self, key: int) -> None:
         if key == pygame.K_ESCAPE:
-            self._export_and_analyze(quit_after=True)
+            self.running = False
         elif key == pygame.K_e:
-            self._export_and_analyze(quit_after=False)
+            self._export_and_analyze()
         elif key == pygame.K_SPACE:
             self.sim.toggle_pause()
             self.status_msg = "PAUSADO" if self.sim.paused else "Simulación en curso"
@@ -95,7 +95,7 @@ class SimulatorApp:
             self.sim.config.sim_speed = min(16.0, self.sim.config.sim_speed * 2)
             self.status_msg = f"Velocidad ×{self.sim.config.sim_speed:.2f}"
 
-    def _export_and_analyze(self, quit_after: bool) -> None:
+    def _export_and_analyze(self) -> None:
         if self._exporting:
             return
         self._exporting = True
@@ -117,9 +117,6 @@ class SimulatorApp:
         append_analysis(analysis, path)
         self.status_msg = f"Reporte guardado en {path.resolve()}"
         self._exporting = False
-
-        if quit_after:
-            self.running = False
 
     # ------------------------------------------------------------------
     # Dibujo
@@ -224,7 +221,7 @@ class SimulatorApp:
             pygame.draw.circle(self.screen, WHITE, (int(x), int(y)), 7, 1)
 
     def _draw_dashboard(self) -> None:
-        panel = pygame.Rect(820, 20, 260, 520)
+        panel = pygame.Rect(820, 20, 260, 570)
         pygame.draw.rect(self.screen, PANEL, panel, border_radius=8)
         pygame.draw.rect(self.screen, PANEL_BORDER, panel, 1, border_radius=8)
 
@@ -233,61 +230,59 @@ class SimulatorApp:
         m = st.metrics
         m.advance(self.sim.now)
 
-        lines = [
-            ("DASHBOARD", True),
-            ("", False),
-            (f"Tiempo: {self.sim.now:7.1f} s", False),
-            (f"Estado: {'PAUSA' if self.sim.paused else 'RUN'}", False),
-            (f"Velocidad: ×{cfg.sim_speed:.2f}", False),
-            ("", False),
-            (f"λ (llegada): {cfg.lam:5.1f}", False),
-            (f"μ (servicio): {cfg.mu:5.1f}", False),
-            (f"S (capacidad): {cfg.S}", False),
-            (f"s (umbral):   {cfg.s}", False),
-            (f"Q (lote):     {cfg.Q}", False),
-            ("", False),
-            ("— Colas —", True),
-            (f"L  = {m.L:.3f}", False),
-            (f"Lq = {m.Lq:.3f}", False),
-            (f"W  = {m.W:.3f} s", False),
-            (f"Wq = {m.Wq:.3f} s", False),
-            ("", False),
-            ("— Tráfico —", True),
-            (f"Procesados: {m.departures}", False),
-            (f"Perdidos:   {m.lost}", False),
-            (f"Pérdida:    {m.loss_rate:.2f}%", False),
-            ("", False),
-            ("— Costos —", True),
-            (f"Holding:  ${st.holding_cost:.2f}", False),
-            (f"Shortage: ${st.shortage_cost:.2f}", False),
-            (f"Global:   ${st.total_cost:.2f}", False),
-            ("", False),
-            ("— Asignación —", True),
-            (f"Húngaro ×{st.assignment_runs}", False),
-            (f"Costo: {st.last_assignment_cost:.3f}", False),
-            (f"Flujo: {st.flow_signals} señales", False),
+        rows = [
+            ("DASHBOARD", "title"),
+            ("", "blank"),
+            (f"Tiempo      {self.sim.now:7.1f} s", "text"),
+            (f"Estado      {'PAUSA' if self.sim.paused else 'RUN'}", "text"),
+            (f"Velocidad   ×{cfg.sim_speed:.2f}", "text"),
+            ("", "blank"),
+            (f"λ llegada   {cfg.lam:5.1f}", "text"),
+            (f"μ servicio  {cfg.mu:5.1f}", "text"),
+            (f"S capacidad {cfg.S}", "text"),
+            (f"s umbral    {cfg.s}", "text"),
+            (f"Q lote      {cfg.Q}", "text"),
+            ("", "blank"),
+            ("— COLAS —", "header"),
+            (f"L  = {m.L:.3f}    W  = {m.W:.3f} s", "text"),
+            (f"Lq = {m.Lq:.3f}    Wq = {m.Wq:.3f} s", "text"),
+            ("", "blank"),
+            ("— TRÁFICO —", "header"),
+            (f"Procesados {m.departures}", "text"),
+            (f"Perdidos   {m.lost}", "text"),
+            (f"Pérdida    {m.loss_rate:.2f}%", "text"),
+            ("", "blank"),
+            ("— COSTOS —", "header"),
+            (f"Holding  ${st.holding_cost:.2f}", "text"),
+            (f"Shortage ${st.shortage_cost:.2f}", "text"),
+            (f"Global   ${st.total_cost:.2f}", "text"),
+            ("", "blank"),
+            ("— ASIGNACIÓN —", "header"),
+            (f"Húngaro {st.assignment_runs}", "text"),
+            (f"Costo   {st.last_assignment_cost:.4f}", "text"),
+            (f"Flujo   {st.flow_signals} señales", "text"),
+            ("", "blank"),
+            ("— COLAS POR NODO —", "header"),
         ]
 
         y = panel.y + 14
-        for text, bold in lines:
-            if not text:
-                y += 8
-                continue
-            font = self.font_lg if bold else self.font
-            color = ACCENT if bold else TEXT
-            surf = font.render(text, True, color)
-            self.screen.blit(surf, (panel.x + 14, y))
-            y += 20 if bold else 18
+        for text, kind in rows:
+            if kind == "blank":
+                y += 5
+            elif kind == "title":
+                self.screen.blit(self.font_lg.render(text, True, ACCENT), (panel.x + 12, y))
+                y += 23
+            elif kind == "header":
+                self.screen.blit(self.font_sm.render(text, True, ACCENT), (panel.x + 12, y))
+                y += 17
+            else:
+                self.screen.blit(self.font_sm.render(text, True, TEXT), (panel.x + 12, y))
+                y += 16
 
-        # Colas por nodo
-        y += 6
-        surf = self.font_lg.render("Colas/nodo", True, ACCENT)
-        self.screen.blit(surf, (panel.x + 14, y))
-        y += 22
         for node in self.sim.network.nodes:
             sat = node.buffer.saturation * 100
             line = f"{node.name:7s} {node.queue_size:2d} ({sat:5.1f}%)"
-            self.screen.blit(self.font_sm.render(line, True, MUTED), (panel.x + 14, y))
+            self.screen.blit(self.font_sm.render(line, True, MUTED), (panel.x + 12, y))
             y += 16
 
     def _draw_footer(self) -> None:

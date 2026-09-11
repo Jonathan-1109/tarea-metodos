@@ -1,78 +1,92 @@
 ====================================================
            REPORTE DE SIMULACIÓN DE RED
 ====================================================
-Tiempo Total de Simulación: 16.64 s
-Tasa de Llegada (lambda): 15.0 paquetes/s
+Tiempo Total de Simulación: 27.20 s
+Tasa de Llegada (lambda): 31.0 paquetes/s
 Tasa de Servicio (mu): 18.0 paquetes/s
 Capacidad de Buffer (S): 50 paquetes
 Umbral Reabastecimiento (s): 10 paquetes
 METRICAS OBTENIDAS:
-- Paquetes Procesados: 213
-- Paquetes Perdidos (Overflow): 0
-- Tasa de Pérdida: 0.00%
-- Tiempo Medio en Cola (Wq): 0.13 s
-- Promedio Paquetes en Sistema (L): 13.26
-- Costo Total de Almacenamiento: $2.39
-- Costo Total de Penalización (Ruptura): $0.00
-- Costo Global del Sistema: $2.39
+- Paquetes Procesados: 370
+- Paquetes Perdidos (Overflow): 31
+- Tasa de Pérdida: 7.73%
+- Tiempo Medio en Cola (Wq): 0.38 s
+- Promedio Paquetes en Sistema (L): 22.74
+- Costo Total de Almacenamiento: $15.31
+- Costo Total de Penalización (Ruptura): $310.00
+- Costo Global del Sistema: $325.31
 ====================================================
 
 METRICAS ADICIONALES:
-- Lq (promedio en cola): 3.54
-- W (tiempo medio en sistema): 1.01 s
-- Ejecuciones Algoritmo Húngaro: 16
-- Último costo de asignación: 1.2400
-- Señales de control de flujo: 3
+- Lq (promedio en cola): 11.91
+- W (tiempo medio en sistema): 1.32 s
+- Ejecuciones Algoritmo Húngaro: 27
+- Último costo de asignación: 1.4400
+- Señales de control de flujo: 19
 - Tabla de ruteo actual: {0: 2, 1: 4, 2: 4, 3: 4}
 ====================================================
 
 ====================================================
      ANÁLISIS AUTOMATIZADO (GEMINI API)
 ====================================================
-Aquí tienes un análisis detallado del desempeño del simulador de red, estructurado en la evaluación de métricas clave, conclusiones generales y 3 recomendaciones puntuales de optimización.
+Aquí tienes un análisis técnico y detallado del desempeño del sistema de red modelado, basado en los principios de teoría de colas y gestión de inventarios.
 
 ---
 
-### 1. EVALUACIÓN DE MÉTRICAS CLAVE
+### DIAGNÓSTICO ESTRUCTURAL DEL SISTEMA
 
-#### A. Tasa de Pérdida de Paquetes (Confiabilidad)
-* **Resultado:** **0.00%** (0 paquetes perdidos de 213 procesados).
-* **Evaluación:** **Excelente.** La capacidad del buffer ($S = 50$) es más que suficiente para absorber las ráfagas de tráfico actuales. La combinación de la tasa de llegada ($\lambda = 15.0$) y la de servicio ($\mu = 18.0$) mantiene el sistema en un régimen estable ($\rho = \lambda/\mu = 0.833$ o $83.3\%$ de utilización). No hubo desbordamiento (*overflow*) ni costes por penalización ($0.00).
+El parámetro fundamental que rige el comportamiento de este sistema es la **Intensidad de Tráfico ($\rho$)**:
+$$\rho = \frac{\lambda}{\mu} = \frac{31.0 \text{ paq/s}}{18.0 \text{ paq/s}} \approx 1.72$$
 
-#### B. Tiempos de Espera y Carga del Sistema (Latencia)
-* **Tiempo Medio en Cola ($W_q$):** $0.13\text{ s}$ (Bajo y aceptable).
-* **Tiempo Medio en el Sistema ($W$):** $1.01\text{ s}$.
-* **Promedio de Paquetes en el Sistema ($L$):** $13.26$ paquetes.
-* **Promedio de Paquetes en Cola ($L_q$):** $3.54$ paquetes.
-* **Evaluación:** Existe un desfase notable entre el tiempo en cola ($0.13\text{ s}$) y el tiempo total en el sistema ($1.01\text{ s}$). Dado que la tasa de servicio es $\mu = 18\text{ paq/s}$ (tiempo teórico de servicio $\approx 0.055\text{ s}$), el tiempo en el sistema debería ser cercano a $0.185\text{ s}$. La diferencia ($1.01 - 0.13 = 0.88\text{ s}$) indica la presencia de **overhead de procesamiento externo** (latencia de cómputo introducida por el algoritmo de ruteo/asignación o retardo de propagación/procesamiento adicional).
-
-#### C. Costos y Control de Flujo (Eficiencia Operativa)
-* **Costo Global:** $\$2.39$ (compuesto $100\%$ por costos de almacenamiento/retención en buffer).
-* **Señales de Control de Flujo:** 3 activaciones durante $16.64\text{ s}$.
-* **Algoritmo Húngaro:** 16 ejecuciones (aprox. 1 ejecución por segundo).
-* **Evaluación:** El costo del sistema es mínimo debido a la ausencia de penalizaciones. Sin embargo, ejecutar el Algoritmo Húngaro 16 veces en un lapso de $16.64\text{ s}$ consume recursos de cómputo elevados. La tabla de ruteo final `{0: 2, 1: 4, 2: 4, 3: 4}` muestra una **fuerte concentración de tráfico hacia la ruta/nodo 4**, lo que podría generar un cuello de botella futuro.
+**Diagnóstico Primario:** El sistema se encuentra en un estado de **sobresaturación severa ($\rho > 1$)**. La tasa de llegada de paquetes supera la capacidad de procesamiento del servidor en un **72.2%**. En teoría de colas estándar con capacidad infinita, esto provocaría una cola infinita. Al tener un buffer finito ($S = 50$), la consecuencia directa es la pérdida recurrente de información y el colapso del tiempo de respuesta.
 
 ---
 
-### 2. CONCLUSIONES DETALLADAS
+### 1. ANALISIS DETALLADO DE MÉTRICAS
 
-1. **Estabilidad Teórica y Cero Pérdidas:** El sistema opera dentro de su zona de estabilidad ($\rho = 0.833 < 1$). El tamaño del buffer ($S=50$) previene eficazmente la pérdida de datos bajo las tasas de llegada actuales.
-2. **Latencia por Overhead de Cómputo:** El tiempo total de procesamiento por paquete ($W = 1.01\text{ s}$) está dominado por la sobrecarga algorítmica y no por la cola físico-materia del modelo M/M/1 (o M/M/1/K). La ejecución frecuente del Algoritmo Húngaro (16 veces en 16.6 s) aporta latencia al pipeline.
-3. **Desbalanceo en las Tablas de Ruteo:** La asignación actual dirige el $75\%$ de los flujos de origen (entradas 1, 2 y 3) hacia el mismo destino/interfaz (`4`). Esto indica que el algoritmo de optimización está sobrecargando una sola ruta.
+#### A. Tasa de Pérdida de Paquetes (Overflow)
+*   **Pérdida del 7.73% (31 paquetes de 401 generados aprox.):** Para redes de datos modernas, una pérdida del 7.73% es inaceptable (los estándares de calidad de servicio QoS suelen exigir pérdidas $< 1\%$ para voz/video y $< 0.1\%$ para datos críticos).
+*   El buffer ($S = 50$) actúa como un paliativo temporal, pero al saturarse rápidamente por la condición $\lambda > \mu$, 31 paquetes fueron descartados por desbordamiento (overflow).
+
+#### B. Tiempos de Espera y Dinámica de Cola
+*   **Tiempo en Sistema ($W = 1.32 \text{ s}$):** Un paquete tarda en promedio 1.32 segundos en atravesar el nodo. En redes informáticas, esto representa una latencia masiva (jitter y lag alto).
+*   **Tiempo en Cola ($W_q = 0.38 \text{ s}$):** El tiempo de espera puro en buffer es de 0.38 s. 
+*   **Anomalía en el Tiempo de Servicio Real:** Observamos que $W - W_q = 1.32 - 0.38 = 0.94 \text{ s}$. Si la tasa de servicio teórica es $\mu = 18 \text{ paq/s}$, el tiempo de transmisión puro debería ser $1/\mu \approx 0.055 \text{ s}$. La gran diferencia ($0.94 \text{ s} - 0.055 \text{ s} = 0.885 \text{ s}$) indica que **los algoritmos de computación/asignación (como el Algoritmo Húngaro) están añadiendo un "overhead" o latencia de procesamiento muy alto por paquete**.
+*   **Ocupación Promedio ($L = 22.74$):** El buffer pasa la mayor parte del tiempo a casi la mitad de su capacidad máxima, fluctuando agresivamente hacia el límite de 50.
+
+#### C. Análisis Económico / Costos
+*   **Costo de Almacenamiento:** $\$15.31$ ($4.7\%$ del costo total).
+*   **Costo de Penalización (Ruptura/Pérdida):** $\$310.00$ ($95.3\%$ del costo total).
+*   **Conclusión Financiera:** El sistema sufre una penalización extrema. Perder paquetes cuesta aproximadamente $\$10.00$ por paquete perdido ($310 / 31$). Mantener los paquetes en memoria es sumamente barato en comparación con perderlos. El modelo financiero está severamente castigado por la falta de capacidad de cómputo.
+
+#### D. Operativa y Algoritmos (Húngaro y Control de Flujo)
+*   **Señales de Control de Flujo (19 ejecutadas):** A pesar de haberse activado 19 señales de control de flujo para frenar a la fuente, estas fueron insuficientes o actuaron demasiado tarde para evitar las 31 pérdidas.
+*   **Algoritmo Húngaro (27 ejecuciones):** Se ejecutó casi 1 vez por segundo. Al ser un algoritmo de complejidad $O(n^3)$ para asignación óptima, su alta frecuencia está ralentizando el rendimiento global del nodo.
 
 ---
 
-### 3. TRES RECOMENDACIONES DE OPTIMIZACIÓN
+### 2. CONCLUSIONES GENERALES
 
-#### 1. Optimizar la Frecuencia de Ejecución del Algoritmo Húngaro (Disminución de Overhead)
-* **Acción:** Reemplazar la ejecución periódica continua del Algoritmo Húngaro (actualmente ~1 Hz) por un **esquema reactivo basado en eventos o umbrales**.
-* **Impacto:** Reducirá drásticamente la latencia interna de procesamiento, bajando el tiempo total en el sistema ($W$) de $1.01\text{ s}$ a valores cercanos al teórico ($\approx 0.18\text{ s}$), además de liberar CPU del simulador/enrutador.
+1.  **Cuello de Botella en el Servidor:** El problema principal no es el tamaño del buffer ($S=50$), sino la incapacidad del servidor para procesar a la velocidad requerida ($\mu = 18$ vs $\lambda = 31$).
+2.  **Desbalance de Costos:** El costo global ($\$325.31$) está dominado en un $95\%$ por penalizaciones de pérdida. Optimizar el sistema no requiere reducir el almacenamiento, sino erradicar el overflow.
+3.  **Algoritmo de Control Ineficiente:** El mecanismo actual de control de flujo no está sincronizado dinámicamente con el umbral de reabastecimiento/desborde ($s = 10$), permitiendo que el buffer se llene más rápido de lo que las señales pueden frenar el tráfico entrante.
 
-#### 2. Rebalanceo de Carga y Restricciones en la Tabla de Ruteo
-* **Acción:** Modificar la función de costo del Algoritmo Húngaro introduciendo una **penalización por saturación de ruta**. 
-* **Impacto:** Evitará la concentración de tráfico en el nodo/puerto `4` (actualmente con 3 asignaciones de 4) y distribuirá equitativamente los paquetes entre las rutas disponibles, reduciendo el riesgo de colapso en escenarios de mayor congestión ($\lambda > 15$).
+---
 
-#### 3. Ajuste Fino (*Tuning*) de Parámetros de Inventario/Buffer ($s$ y $S$)
-* **Acción:** Dado que la ocupación promedio ($L$) es de $13.26$ paquetes y el pico no sobrepasó la capacidad, se puede **reducir la capacidad máxima del buffer ($S$) de 50 a 30 paquetes**, y elevar ligeramente el umbral de reabastecimiento/control ($s$) de 10 a 12.
-* **Impacto:** Reducirá el costo de almacenamiento por sostener paquetes en memoria sin poner en riesgo la tasa de pérdida de $0.00\%$, optimizando el uso de recursos de hardware simulados.
+### 3. RECOMENDACIONES DE OPTIMIZACIÓN
+
+#### Recomendación 1: Escalamiento de Capacidad de Servicio (Multi-servidor / Balanceo)
+*   **Acción:** Incrementar la tasa de servicio global ($\mu$) para llevar la intensidad de tráfico a un nivel estable ($\rho \le 0.75$).
+*   **Implementación:** Se requiere aumentar $\mu$ a al menos **42 paquetes/s**, o transformar el nodo en un sistema multiservidor (ej. modelo $M/M/c$ con $c = 2$ servidores procesando a $\mu = 20 \text{ paq/s}$ cada uno).
+*   **Impacto Esperado:** Reducción de la tasa de pérdida al **0%**, disminución del tiempo en sistema ($W$) a $< 0.1 \text{ s}$ y eliminación del $95\%$ de los costos por penalización.
+
+#### Recomendación 2: Optimización Algorítmica de Asignación (Reemplazo del Algoritmo Húngaro)
+*   **Acción:** Sustituir la asignación exacta del Algoritmo Húngaro por una heurística de menor complejidad computacional (ej. *Greedy Assignment* o *Min-Cost Flow aproximado*).
+*   **Implementación:** Reducir la frecuencia de cálculo del Húngaro (ejecutarlo por lotes de paquetes y no de forma tan recurrente, o activarlo solo cuando el buffer cruce el umbral $s = 10$).
+*   **Impacto Esperado:** Reducirá la latencia latente de procesamiento de $0.94 \text{ s}$ a un valor cercano al teórico de $0.055 \text{ s}$, liberando recursos de CPU para procesar la cola acumulada ($L_q = 11.91$).
+
+#### Recomendación 3: Rediseño del Control de Flujo Preventivo y Tamaño de Buffer (AQM / RED)
+*   **Acción:** Rediseñar la política $(s, S)$ implementando un esquema de *Gestión Activa de Colas* (Active Queue Management) como **RED (Random Early Detection)**.
+*   **Implementación:** Ajustar las 19 señales de control de flujo para que se disparen de forma **proactiva** y no reactiva. Iniciar el estrangulamiento de la fuente (Backpressure) cuando el buffer alcance el umbral $s = 10$ paquetes (en lugar de esperar a que roce los 50), obligando a $\lambda$ a bajar a $15 \text{ paq/s}$ temporalmente.
+*   **Impacto Esperado:** Eliminación total de los 31 paquetes perdidos mediante el frenado upstream del tráfico, estabilizando el costo global del sistema cerca del mínimo operacional ($<\$20.00$).
 ====================================================

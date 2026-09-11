@@ -22,7 +22,7 @@ Controles (GUI):
     R         Reparar enlaces
     [ / ]     Reducir / aumentar velocidad
     E         Exportar reporte + consultar Gemini
-    ESC       Exportar, analizar y salir
+    ESC       Salir sin exportar
 """
 
 from __future__ import annotations

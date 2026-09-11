@@ -8,7 +8,7 @@ Simulador visual e interactivo (Pygame + SimPy) que integra tres pilares de mét
 | **Inventario** | Capacidad de cola y control de flujo | Política (s, Q), holding + shortage |
 | **Asignación** | Balanceo dinámico y enrutamiento | Cᵢⱼ = latencia + α·saturación → Húngaro |
 
-Al finalizar (o con la tecla `E`), exporta `reporte_simulacion.txt` y solicita un diagnóstico a la **Gemini API**.
+Con la tecla `E` exporta `reporte_simulacion.txt` y solicita un diagnóstico a la **Gemini API** (salir con `ESC` no consulta la API).
 
 ## Requisitos
 
@@ -45,7 +45,7 @@ python main.py --headless --seconds 60 --no-api
 | `R` | Reparar todos los enlaces |
 | `[` / `]` | Velocidad de simulación |
 | `E` | Exportar reporte + análisis Gemini |
-| `ESC` | Exportar, analizar y salir |
+| `ESC` | Salir sin exportar |
 
 ## Estructura
 
