@@ -63,9 +63,17 @@ main.py            # Entrada
 reporte_simulacion.txt
 ```
 
-## Parámetros por defecto
+## Entregables
 
-- λ = 15.0 paquetes/s  
-- μ = 18.0 paquetes/s  
-- S = 50, s = 10, Q = 20  
-- Δt (reoptimización Húngaro) = 1.0 s  
+| Archivo | Descripción |
+|---|---|
+| `src/simulator/` + `main.py` | Código fuente comentado (colas, inventario, Húngaro, GUI, API) |
+| `reporte_simulacion.txt` | Salida de ejemplo con métricas + análisis Gemini |
+| `Informe_Tecnico_Simulador_Redes.docx` | Informe técnico (modelos, métricas y capturas de GUI) |
+
+Para regenerar el informe Word:
+
+```bash
+pip install python-docx
+python scripts/generate_informe_docx.py
+```
